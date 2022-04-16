@@ -1,0 +1,93 @@
+---
+#- hosts: vm
+#  gather_facts: False
+#  connection: local
+#  tasks:
+#    - name: debug msg
+#      debug:
+#        msg: "hello andras"
+#    - name: ping
+#      action: ping
+#    - name: install podman
+#      package:
+#        name: "podman"
+#        state: present
+- hosts: all
+  tasks:
+  - name: save kernel version
+    command: uname -r
+    register: kernel_version
+
+  - name: print kernel version
+    debug:
+      msg: "Kernel version: {{ kernel_version.stdout }}"
+
+  - name: Gather the package facts
+    ansible.builtin.package_facts:
+      manager: auto
+
+  - name: Check git installed
+    debug:
+      msg: "Installed git package information: {{ ansible_facts.packages.git }}"
+    when: "'git' in ansible_facts.packages"
+
+  - name: Install git if necessary
+    package:
+      name: "git"
+      state: present
+    when: "'git' not in ansible_facts.packages"
+
+  - name: Check podman installed
+    debug:
+      msg: "Installed podman package information: {{ ansible_facts.packages.podman }}"
+    when: "'podman' in ansible_facts.packages"
+
+  - name: Install podman if necessary
+    package:
+      name: "podman"
+      state: present
+    when: "'podman' not in ansible_facts.packages"
+
+  - name: Check podman-docker installed
+    debug:
+      msg: "Installed podman-docker package information: {{ ansible_facts.packages['podman-docker'] }}"
+    when: "'podman-docker' in ansible_facts.packages"
+
+  - name: Install podman-docker if necessary
+    package:
+      name: "podman-docker"
+      state: present
+    when: "'podman-docker' not in ansible_facts.packages"
+
+  - name: Check docker-compose installed
+    debug:
+      msg: "Installed docker-compose package information: {{ ansible_facts.packages['docker-compose'] }}"
+    when: "'docker-compose' in ansible_facts.packages"
+
+  - name: Install docker-compose if necessary
+    package:
+      name: "docker-compose"
+      state: present
+    when: "'docker-compose' not in ansible_facts.packages"
+
+  - name: Clone docker-compose files from Github repo
+    ansible.builtin.git:
+      repo: 'https://github.com/docker/awesome-compose.git'
+      dest: /root/test/
+      clone: yes
+      update: yes
+      force: yes
+
+  - name: Copy systemd file from host
+    copy:
+      src: /etc/systemd/system/compose.service
+      dest: /etc/systemd/system
+      owner: root
+
+  - name: Start systemd unit for Wordpress
+    systemd:
+      name: compose.service
+      enabled: yes
+      state: started
+
+    
