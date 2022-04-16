@@ -13,6 +13,10 @@
 #        name: "podman"
 #        state: present
 - hosts: all
+  vars:
+    compose_repo_link: "https://github.com/Cserki/onlab.git"
+    compose_repo_dest: "/root/test2/"
+    compose_service_loc: "root/test2/service-files/wordpress-mysql.service"
   tasks:
   - name: save kernel version
     command: uname -r
@@ -70,24 +74,26 @@
       state: present
     when: "'docker-compose' not in ansible_facts.packages"
 
-  - name: Clone docker-compose files from Github repo
+  - name: Get docker-compose files from Github repository
     ansible.builtin.git:
-      repo: 'https://github.com/docker/awesome-compose.git'
-      dest: /root/test/
+      repo: "{{ compose_repo_link }}"
+      dest: "{{ compose_repo_dest }}"
       clone: yes
       update: yes
       force: yes
 
-  - name: Copy systemd file from host
+  - name: Copy systemd service file from git repository to systemd
     copy:
-      src: /etc/systemd/system/compose.service
+#      src: "{{ compose_service_loc }}"
+      src: /home/cserki/onlab/awesome-compose-master/wordpress-mysql/wordpress-mysql.service
       dest: /etc/systemd/system
       owner: root
 
+  - name: Reload systemd daemon
+    command: systemctl daemon-reload
+
   - name: Start systemd unit for Wordpress
     systemd:
-      name: compose.service
+      name: wordpress-mysql.service
       enabled: yes
       state: started
-
-    
