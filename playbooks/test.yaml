@@ -85,7 +85,7 @@
   - name: Copy systemd service file from git repository to systemd
     copy:
 #      src: "{{ compose_service_loc }}"
-      src: /home/cserki/onlab/awesome-compose-master/wordpress-mysql/wordpress-mysql.service
+      src: /home/cserki/github/onlab/service-files/wordpress-mysql.service
       dest: /etc/systemd/system
       owner: root
 
