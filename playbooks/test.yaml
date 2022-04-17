@@ -15,8 +15,8 @@
 - hosts: all
   vars:
     compose_repo_link: "https://github.com/Cserki/onlab.git"
-    compose_repo_dest: "/root/test2/"
-    compose_service_loc: "root/test2/service-files/wordpress-mysql.service"
+    compose_repo_dest: "/root/test/"
+    compose_service_loc: "root/test/service-files/wordpress-mysql.service"
   tasks:
   - name: save kernel version
     command: uname -r
