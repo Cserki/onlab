@@ -1,20 +1,7 @@
 ---
-#- hosts: vm
-#  gather_facts: False
-#  connection: local
-#  tasks:
-#    - name: debug msg
-#      debug:
-#        msg: "hello andras"
-#    - name: ping
-#      action: ping
-#    - name: install podman
-#      package:
-#        name: "podman"
-#        state: present
 - hosts: all
   vars:
-    compose_repo_link: "https://github.com/Cserki/onlab.git"
+#    compose_repo_link: "https://github.com/Cserki/onlab.git"
     compose_src: "/home/cserki/github/onlab/compose/docker-compose.yaml"
     compose_dest: "/root/test/"
     compose_service_loc: "/home/cserki/github/onlab/service-files/wordpress-mysql.service"
@@ -75,14 +62,6 @@
       state: present
     when: "'docker-compose' not in ansible_facts.packages"
 
-  # - name: Get docker-compose files from Github repository
-  #   ansible.builtin.git:
-  #     repo: "{{ compose_repo_link }}"
-  #     dest: "{{ compose_dest }}"
-  #     clone: yes
-  #     update: yes
-  #     force: yes
-
   - name: Copy compose file from host to agent
     copy:
       src: "{{ compose_src }}"
@@ -92,7 +71,6 @@
   - name: Copy systemd service file from git repository to systemd
     copy:
       src: "{{ compose_service_loc }}"
-#      src: /home/cserki/github/onlab/service-files/wordpress-mysql.service
       dest: /etc/systemd/system/
       owner: root
 
