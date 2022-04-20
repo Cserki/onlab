@@ -15,8 +15,9 @@
 - hosts: all
   vars:
     compose_repo_link: "https://github.com/Cserki/onlab.git"
-    compose_repo_dest: "/root/test/"
-    compose_service_loc: "root/test/service-files/wordpress-mysql.service"
+    compose_src: "/home/cserki/github/onlab/compose/docker-compose.yaml"
+    compose_dest: "/root/test/"
+    compose_service_loc: "/home/cserki/github/onlab/service-files/wordpress-mysql.service"
   tasks:
   - name: save kernel version
     command: uname -r
@@ -74,19 +75,25 @@
       state: present
     when: "'docker-compose' not in ansible_facts.packages"
 
-  - name: Get docker-compose files from Github repository
-    ansible.builtin.git:
-      repo: "{{ compose_repo_link }}"
-      dest: "{{ compose_repo_dest }}"
-      clone: yes
-      update: yes
-      force: yes
+  # - name: Get docker-compose files from Github repository
+  #   ansible.builtin.git:
+  #     repo: "{{ compose_repo_link }}"
+  #     dest: "{{ compose_dest }}"
+  #     clone: yes
+  #     update: yes
+  #     force: yes
+
+  - name: Copy compose file from host to agent
+    copy:
+      src: "{{ compose_src }}"
+      dest: "{{ compose_dest }}"
+      owner: root
 
   - name: Copy systemd service file from git repository to systemd
     copy:
-#      src: "{{ compose_service_loc }}"
-      src: /home/cserki/github/onlab/service-files/wordpress-mysql.service
-      dest: /etc/systemd/system
+      src: "{{ compose_service_loc }}"
+#      src: /home/cserki/github/onlab/service-files/wordpress-mysql.service
+      dest: /etc/systemd/system/
       owner: root
 
   - name: Reload systemd daemon
