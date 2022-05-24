@@ -1,0 +1,19 @@
+#cloud-config
+
+users:
+  - name: ansible
+    password: 1111
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDOzDaXDcld7zPiUEfCjrQbMlnMPuhK5LNsnNRZtkP/bSM4CvAhdIPLIKwfj5jcfeVqZeyu4MUYLYy96+/X795plnnE+IRDOvmTBy2VPw6FOJ9av5BvQ8+i383lKnlDbXHAqvYdSp1jBwYZnb1Hmdxob1uvPXroBySgg48T8sbyXugc/U7g6smiuDRg027fBq314P/Kts6mtceIHWYOnfNcxFx0m63NJ83eC8Z9nWxt8MM0+yp7oVmGesn6GiIiDFZxTSnt39D+xOuxqtNk1eVkH0HWUOxPA/HTUkDWtqq8z8aMdW1TGhBxc/PRhQky4+vFIehEnmIXq4gK816km9G2uEV3BJyJRgndrPqr4MXH/SVVaAAKGWZbk8YrOxj1Scxhonul9+fFTWr/Q7I6OzypLE8y4LEjcAJ/l2ZOQaqZZBi4K9kotk8B62URQyFBlo4BWg38cbI3v7ZabOFuSOIBUTUl0qgUWxXZ04ToLD8CIGkC7oJqJiTIrY0ZgxT8PYk= cserki@fedora
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    groups: wheel
+    shell: /bin/bash
+
+network:
+  version: 2
+  ethernets:
+    eth0:
+      adresses:
+        - 192.168.122.2/24
+        - fe80::5054:ff:fefa:8224/64
+      gateway4: 192.168.122.1

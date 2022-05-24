@@ -1,0 +1,85 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    vm_name: Fedora_Server
+    genisoimage_dir: /home/cserki/github/onlab/vm_confs
+    base_image: Fedora-Cloud-Base-35-1.2.x86_64.qcow2
+    images_url: https://download.fedoraproject.org/pub/fedora/linux/releases/35/Cloud/x86_64/images
+    images_dir: /var/lib/libvirt/images/
+    image_capacity: 10G
+
+  tasks:
+    - name: Install @virtualization group
+      dnf:
+        name: '@virtualization'
+        state: present
+
+    - name: Check image exists
+      stat:
+        path: "{{images_dir}}/{{ base_image }}"
+      register: image_path
+
+    - name: Download image if necessary
+      get_url:
+        url: "{{images_url}}/{{ base_image }}"
+        dest: "{{ images_dir }}"
+      when: not image_path.stat.exists
+
+    - name: Create VM image from base image
+      command: qemu-img create -b {{ images_dir }}/{{ base_image }} -f qcow2 -F qcow2 {{ images_dir }}/{{ vm_name }}.img {{ image_capacity }}
+
+    - name: Create cloud-init configuration image
+      command: genisoimage -output {{ genisoimage_dir }}/{{ vm_name }}-cidata.iso -V cidata -r -J {{ genisoimage_dir }}/user-data {{ genisoimage_dir }}/meta-data
+      become: yes
+
+    - name: Gather all VMs
+      community.libvirt.virt:
+        command: list_vms
+      register: all_vms
+
+    - name: Install VM
+      command: >
+         virt-install --name={{ vm_name }}
+          --description 'Fedora 35 Server'
+          --ram 3072
+          --vcpus 2
+          --import
+          --disk path={{ images_dir }}/{{ vm_name }}.img,format=qcow2
+          --disk path={{ genisoimage_dir }}/{{ vm_name }}-cidata.iso,device=cdrom
+          --os-variant=ubuntu21.04
+          --network bridge=virbr0
+          --graphics vnc,listen=127.0.0.1,port=5901
+          --noautoconsole
+      when: vm_name not in all_vms.list_vms
+
+    - name: Start vm
+      community.libvirt.virt:
+        name: "{{ vm_name }}"
+        state: running
+
+
+            # - name: Download image if necessary
+            #   get_url:
+            #     url: https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/x86_64/iso/Fedora-Server-dvd-x86_64-35-1.2.iso
+            #     dest: /var/lib/libvirt/images/
+            #   when: not image_path.stat.exists
+            #
+            # - name: Check qcow2 exists
+            #   stat:
+            #     path: /var/lib/libvirt/disks/guest.qcow2
+            #   register: disk_path
+            #
+            # - name: Create qcow2 disk
+            #   command: "qemu-img create -f qcow2 /var/lib/libvirt/disks/guest.qcow2 16384M"
+            #   when: not disk_path.stat.exists
+
+            # - name: List all VMs
+            #   community.libvirt.virt:
+            #     command: list_vms
+            #   register: all_vms
+            #
+            # - name: Print VMs
+            #   debug:
+            #     var: all_vms.list_vms
+            #   #when: vm_name in all_vms.list_vms

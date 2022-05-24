@@ -1,0 +1,49 @@
+---
+- hosts: vm
+  vars:
+    service_name: wordpress-mysql.service
+    containers: ['test_db_1', 'test_wordpress_1']
+    sample_string: kutyamacska
+  tasks:
+
+    - name: Get Service Status
+      systemd:
+        name: "{{ service_name }}"
+      register: service_status
+
+    - name: Service is running
+      assert:
+        that:
+          - 'service_status.status.ActiveState is match("active")'
+        fail_msg: "{{ service_name }} is not active"
+        success_msg: "{{ service_name }} is active"
+
+    - name: Gather facts of defined containers
+      containers.podman.podman_container_info:
+        name: "{{ containers }}"
+      register: test_db_1_info
+      become: true
+
+    - name: Check container states
+      debug:
+      #set_fact:
+        #container_states: "{{ container_states | combine( {item: {'{{item.1}}': '{{item.0.State.Status}}'}}) }}"
+        #container_states: "{{ item.1 }}: {{ item.0.State.Status }}"
+        msg: "{{ item.1 }}: {{ item.0.State.Status }}"
+      loop: "{{ test_db_1_info.containers | zip(containers) | list }}"
+      loop_control:
+        label: "{{ item.0.Name}}"
+      failed_when: 'item.0.State.Status is not match("running")'
+
+    - name: Check that a page returns a status 200 and save its content
+      uri:
+        url: http://{{ ansible_ssh_host }}:8080
+        return_content: yes
+      register: response
+
+    - name: Check page contents contain a certain string
+      assert:
+        that:
+          - 'sample_string in response.content'
+        fail_msg: "Content does not contains: {{ sample_string }}"
+        success_msg: "Content contains: {{ sample_string }}"

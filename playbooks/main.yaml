@@ -1,0 +1,55 @@
+---
+- hosts: vm
+  vars:
+#    compose_repo_link: "https://github.com/Cserki/onlab.git"
+    compose_src: "/home/cserki/github/onlab/compose/docker-compose.yaml"
+    compose_dest: "/root/test/"
+    compose_service_loc: "/home/cserki/github/onlab/service-files/wordpress-mysql.service"
+  tasks:
+
+  - name: Gather the package facts
+    package_facts:
+      manager: auto
+
+  - name: Install required packages
+    dnf:
+      name:
+        - git
+        - podman
+        - podman-docker
+        - docker-compose
+        - firewalld
+      state: latest
+    become: true
+
+  - name: Copy compose file from host to agent
+    copy:
+      src: "{{ compose_src }}"
+      dest: "{{ compose_dest }}"
+      owner: ansible
+    become: true
+
+  - name: Copy systemd service file from git repository to systemd
+    copy:
+      src: "{{ compose_service_loc }}"
+      dest: /etc/systemd/system/
+      owner: ansible
+    become: true
+
+  - name: Reload systemd daemon
+    command: systemctl daemon-reload
+    become: true
+
+  - name: Start systemd unit for Wordpress
+    systemd:
+      name: wordpress-mysql.service
+      enabled: yes
+      state: started
+    become: true
+
+  - name: Open port for Wordpress
+    firewalld:
+      port: 8080/tcp
+      permanent: true
+      state: enabled
+    become: true
